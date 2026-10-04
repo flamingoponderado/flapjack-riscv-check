@@ -37,7 +37,7 @@ talks about into a Sail run with the same observable registers and memory.
 ## Scope
 
 The compiler theorem only uses GPRs, PC, `MEM8`, `NextFetch`, `exception`,
-`mstatus.VM` and `mcpuid.ArchBase`. `riscvEnc` emits only these 33
+`mstatus.VM` and `mcpuid.ArchBase`. `riscvEnc` emits only these 37
 instructions (no compressed encodings):
 
     LUI AUIPC ADDI ORI XORI ANDI ADD SUB AND OR XOR SLTU
@@ -45,7 +45,7 @@ instructions (no compressed encodings):
     LD LWU LHU LBU SD SW SH SB
     BEQ BNE BLT BGE BLTU BGEU JAL JALR
 
-**Tier 1 (the target):** these 33 instructions.
+**Tier 1 (the target):** these 37 instructions.
 **Tier 2:** the rest of RV64IM, then A (LR/SC needs the
 `load_reservation`/`match_reservation` axioms, so it is weaker).
 

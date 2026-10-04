@@ -10,3 +10,10 @@ import FlapjackRiscvCheck.Exec.ALU
 import FlapjackRiscvCheck.BridgeM
 import FlapjackRiscvCheck.Exec.Imm
 import FlapjackRiscvCheck.Exec.MulDiv
+import FlapjackRiscvCheck.Sail.RegsOther
+import FlapjackRiscvCheck.Sail.Monad
+import FlapjackRiscvCheck.Sail.Jump
+import FlapjackRiscvCheck.L3.Control
+import FlapjackRiscvCheck.Exec.Contract
+import FlapjackRiscvCheck.Exec.Branch
+import FlapjackRiscvCheck.Exec.Jump
