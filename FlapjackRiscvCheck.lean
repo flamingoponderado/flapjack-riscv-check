@@ -25,3 +25,6 @@ import FlapjackRiscvCheck.Sail.Mem.Pma
 import FlapjackRiscvCheck.Sail.Mem.Phys
 import FlapjackRiscvCheck.Sail.Mem.Page
 import FlapjackRiscvCheck.Sail.Mem.Read
+import FlapjackRiscvCheck.Sail.Mem.Bytes
+import FlapjackRiscvCheck.L3.Load
+import FlapjackRiscvCheck.Exec.Load

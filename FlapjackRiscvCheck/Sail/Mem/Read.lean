@@ -1,6 +1,7 @@
 import FlapjackRiscvCheck.Sail.Mem.Phys
 import FlapjackRiscvCheck.Sail.Mem.Addr
 import FlapjackRiscvCheck.Sail.Mem.Page
+import FlapjackRiscvCheck.Sail.Mem.Bytes
 
 /-!
 # Data loads through `vmem_read`
@@ -110,5 +111,16 @@ theorem runSail_vmem_read {t : SailState} {n : BitVec 5} {x : BitVec 64}
   rw [runSail_bind_of_eq (runSail_get_transformed_data_addr h.mem hx offset _ w)]
   simp only [pure_bind, ExceptT_run_lift]
   rw [runSail_map_ok (runSail_vmem_read_addr h hram)]
+
+theorem runSail_read_ram {t : SailState} {a : BitVec 64} {w : Nat} {v : BitVec (8 * w)}
+    (h : runSail (PreSail.readBytes w a.toNat : SailM (BitVec (8 * w) × Option Bool)) t =
+      some ((v, none), t)) :
+    runSail (read_ram .Read_plain (.Physaddr a) w false) t = some ((v, ()), t) := by
+  unfold read_ram
+  simp only [Bool.false_eq_true, if_false, pure_bind, bind_assoc]
+  unfold LeanRV64D.ConcurrencyInterfaceV1.sail_mem_read Sail.ConcurrencyInterfaceV1.PreSail.sail_mem_read
+  simp only [bind_assoc]
+  rw [runSail_bind_of_eq h]
+  rfl
 
 end FlapjackRiscvCheck

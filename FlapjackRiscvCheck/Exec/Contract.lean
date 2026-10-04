@@ -27,6 +27,7 @@ structure ExecPre (s : L3State) (t : SailState) : Prop where
   skip : Skip s = 4
   nextPC : t.regs.get? Register.nextPC = some (PC s + 4)
   rv64 : (MCSR s).mcpuid.ArchBase = 2
+  bareVM : (s.c_MCSR s.procID).mstatus.VM = 0#5
   pcEven : (PC s).getLsbD 0 = false
   misaC : ∃ m, t.regs.get? Register.misa = some m ∧ _get_Misa_C m = 1
   machine : t.regs.get? Register.cur_privilege = some .Machine
