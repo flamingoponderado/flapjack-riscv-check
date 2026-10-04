@@ -57,6 +57,7 @@ theorem store_post {s t} (h : ExecPre s t) {rs1 rs2 : BitVec 5} {imm : BitVec 12
     · rename_i hr
       rw [hdata _ (by omega)]
     · exact hm.agree a ha
+  l3frame := ⟨rfl, rfl, rfl, rfl, rfl⟩
 
 theorem sd_sim {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (imm : BitVec 12)
     (hacc : SailAccessOK t (l3EA s rs1 imm) 8 true) :

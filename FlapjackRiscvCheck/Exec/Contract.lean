@@ -47,11 +47,33 @@ theorem MemRel.of_eq {s s' t t' D} (h : MemRel s t D) (hs : s'.MEM8 = s.MEM8)
     (ht : t'.mem = t.mem) : MemRel s' t' D :=
   ⟨fun a ha => by rw [hs, ht]; exact h.agree a ha⟩
 
+/-- The L3 fields a tier-1 `Run` leaves unchanged. -/
+structure L3Frame (s s' : L3State) : Prop where
+  exception : s'.exception = s.exception
+  mcsr : s'.c_MCSR = s.c_MCSR
+  procID : s'.procID = s.procID
+  skip : s'.c_Skip = s.c_Skip
+  pc : s'.c_PC = s.c_PC
+
+theorem L3Frame.ofWrite (s : L3State) (n : BitVec 5) (v : BitVec 64) :
+    L3Frame s («write'GPR» (v, n) s) := by
+  simp only [«write'GPR», «write'gpr»]
+  by_cases h : n = 0#5 <;> simp [h] <;> exact ⟨rfl, rfl, rfl, rfl, rfl⟩
+
+theorem L3Frame.ofBranchTo (s : L3State) (a : BitVec 64) : L3Frame s (branchTo a s) :=
+  ⟨rfl, rfl, rfl, rfl, rfl⟩
+
+theorem L3Frame.trans {s₁ s₂ s₃ : L3State} (h₁ : L3Frame s₁ s₂) (h₂ : L3Frame s₂ s₃) :
+    L3Frame s₁ s₃ :=
+  ⟨h₂.exception.trans h₁.exception, h₂.mcsr.trans h₁.mcsr, h₂.procID.trans h₁.procID,
+    h₂.skip.trans h₁.skip, h₂.pc.trans h₁.pc⟩
+
 structure ExecPost (s s' : L3State) (t t' : SailState) : Prop where
   rel : RegRel s' t'
   nextPC : t'.regs.get? Register.nextPC = l3NextPC s'
   frame : SailRegFrame t t'
   mem : ∀ D, MemRel s t D → MemRel s' t' D
+  l3frame : L3Frame s s'
 
 theorem ExecPre.l3NextPC {s t} (h : ExecPre s t) : l3NextPC s = some (PC s + 4) := by
   simp [FlapjackRiscvCheck.l3NextPC, h.nextFetch, h.skip]
@@ -64,5 +86,6 @@ theorem ExecPost.of_write {s t} (h : ExecPre s t) (rd : BitVec 5) (v : BitVec 64
     rw [sailSetGpr_get?_of_not_gpr _ _ _ rfl, l3NextPC_write'GPR, h.l3NextPC, h.nextPC]
   frame _ hr _ := sailSetGpr_get?_of_not_gpr _ _ _ hr
   mem _ hm := hm.of_eq (l3_MEM8_write'GPR s rd v) (sailSetGpr_mem _ _ _)
+  l3frame := L3Frame.ofWrite s rd v
 
 end FlapjackRiscvCheck

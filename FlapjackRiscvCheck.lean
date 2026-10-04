@@ -42,3 +42,6 @@ import FlapjackRiscvCheck.Decode.MulDiv
 import FlapjackRiscvCheck.Decode.IType
 import FlapjackRiscvCheck.Decode.Mem
 import FlapjackRiscvCheck.Decode.Control
+import FlapjackRiscvCheck.Sail.Mem.Fetch
+import FlapjackRiscvCheck.Sail.Step
+import FlapjackRiscvCheck.L3.Step
