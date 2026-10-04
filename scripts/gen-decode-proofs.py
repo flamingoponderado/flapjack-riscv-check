@@ -109,7 +109,7 @@ for fam, items in FAM.items():
     for (name, args, inst, ast, layout, block, hyp) in items:
         vs = args_vars(args)
         fs = facts(layout)
-        out.append(f"theorem dec_{name} {{s t}} (h : ExecPre s t) {args} {hyp} :")
+        out.append(f"theorem dec_{name} {{t}} (h : DecodeInv t) {args} {hyp} :")
         out.append(f"    runSail (encdec_backwards (Encode ({inst}))) t = some ({ast}, t) := by")
         out.append("  obtain ⟨tail, htail⟩ := encdec_backwards_prefix")
         out.append("  rw [htail]")

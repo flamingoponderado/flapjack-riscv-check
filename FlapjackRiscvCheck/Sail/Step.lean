@@ -72,4 +72,94 @@ theorem runSail_dispatchInterrupt {t : SailState} (h : SailStepInv t) :
       runSail_bind_of_eq (runSail_readReg hm)] <;>
     simp [hMIE, hmach, hms, hmu] <;> rfl
 
+theorem runSail_is_landing_pad_expected {t : SailState} (h : SailStepInv t) :
+    runSail (is_landing_pad_expected ()) t = some (false, t) := by
+  unfold is_landing_pad_expected
+  rw [runSail_bind_of_eq (runSail_readReg h.elp)]
+  rfl
+
+/-- `run_hart_active` for a 32-bit instruction that decodes to `si` and retires. -/
+theorem runSail_run_hart_active {t t2 : SailState} (h : SailStepInv t) (n : Nat)
+    (hcur : t.regs.get? Register.cur_privilege = some .Machine)
+    {pc : BitVec 64} (hpc : t.regs.get? Register.PC = some pc)
+    {w : BitVec 32} (hfetch : runSail (fetch ()) t = some (.F_Base w, t))
+    {si : instruction} (hdec : runSail (ext_decode w) t = some (si, t))
+    (hexec : runSail (execute si) { t with regs := t.regs.insert Register.nextPC (pc + 4) } =
+      some (RETIRE_SUCCESS, t2)) :
+    runSail (run_hart_active n) t =
+      some (.Step_Execute (RETIRE_SUCCESS, zero_extend (m := 32) w), t2) := by
+  unfold run_hart_active
+  rw [SailME.run, runSail_SailME_run]
+  simp only [bind_assoc, ExceptT_run_lift_bind]
+  rw [runSail_bind_of_eq (runSail_readReg hcur), runSail_bind_of_eq (runSail_dispatchInterrupt h)]
+  simp only [pure_bind, ExceptT_run_lift_bind, ext_fetch_hook]
+  rw [runSail_bind_of_eq hfetch]
+  simp only [ExceptT_run_lift_bind, bind_assoc]
+  rw [runSail_bind_of_eq hdec]
+  simp only [get_config_print_instr, Bool.false_eq_true, if_false, ExceptT_run_lift_bind, bind_assoc,
+    pure_bind]
+  rw [runSail_bind_of_eq (runSail_is_landing_pad_expected h)]
+  simp only [Bool.false_and, Bool.false_eq_true, if_false, ExceptT_run_lift_bind, bind_assoc]
+  rw [runSail_bind_of_eq (runSail_readReg hpc)]
+  have h4 : Sail.BitVec.addInt pc 4 = pc + 4 := by simp [Sail.BitVec.addInt]
+  rw [h4, runSail_bind_of_eq (runSail_writeReg _ _), runSail_bind_of_eq hexec]
+  rfl
+
+theorem runSail_should_inc_minstret {t : SailState} (h : SailStepInv t) :
+    ∃ b, runSail (should_inc_minstret .Machine) t = some (b, t) := by
+  obtain ⟨a, ha⟩ := h.mcountinhibit
+  obtain ⟨c, hc⟩ := h.minstretcfg
+  unfold should_inc_minstret
+  rw [runSail_bind_of_eq (runSail_readReg ha), runSail_bind_of_eq (runSail_readReg hc)]
+  exact ⟨_, rfl⟩
+
+/-- The state after `tick_pc` and the `minstret` update that follow a retired instruction. -/
+def sailCommit (t2 : SailState) (npc : BitVec 64) (inc : Bool) (m : BitVec 64) : SailState :=
+  let t3 := { t2 with regs := t2.regs.insert Register.PC npc }
+  if inc then { t3 with regs := t3.regs.insert Register.minstret (Sail.BitVec.addInt m 1) } else t3
+
+/-- `try_step` when `run_hart_active` retires an instruction. -/
+theorem runSail_try_step {t t2 : SailState} (h : SailStepInv t) (n : Nat)
+    (hcur : t.regs.get? Register.cur_privilege = some .Machine) {inc : Bool}
+    (hinc : runSail (should_inc_minstret .Machine) t = some (inc, t)) {ib : BitVec 32}
+    (hrun : runSail (run_hart_active n)
+      { t with regs := t.regs.insert Register.minstret_increment inc } =
+        some (.Step_Execute (RETIRE_SUCCESS, ib), t2))
+    (hact : t2.regs.get? Register.hart_state = some (.HART_ACTIVE ()))
+    {npc : BitVec 64} (hnpc : t2.regs.get? Register.nextPC = some npc)
+    (hmi : t2.regs.get? Register.minstret_increment = some inc)
+    {m : BitVec 64} (hm : t2.regs.get? Register.minstret = some m) :
+    runSail (try_step n false) t = some (false, sailCommit t2 npc inc m) := by
+  unfold try_step
+  simp only [bind_assoc]
+  rw [runSail_bind_of_eq (runSail_readReg hcur), runSail_bind_of_eq hinc,
+    runSail_bind_of_eq (runSail_writeReg _ _)]
+  have hact0 : ({ t with regs := t.regs.insert Register.minstret_increment inc } : SailState).regs.get?
+      Register.hart_state = some (.HART_ACTIVE ()) := by
+    simp [Std.ExtDHashMap.get?_insert]; exact h.active
+  rw [runSail_bind_of_eq (runSail_readReg hact0)]
+  simp only []
+  rw [runSail_bind_of_eq hrun]
+  simp only [RETIRE_SUCCESS, hart_is_active, bind_assoc]
+  rw [runSail_bind_of_eq (runSail_readReg hact)]
+  rw [runSail_bind_of_eq (runSail_assert_true _ t2), runSail_bind_of_eq (runSail_readReg hact)]
+  simp only []
+  unfold tick_pc
+  simp only [bind_assoc]
+  rw [runSail_bind_of_eq (runSail_readReg hnpc), runSail_bind_of_eq (runSail_writeReg _ _)]
+  have hpc3 : ({ t2 with regs := t2.regs.insert Register.PC npc } : SailState).regs.get? Register.PC =
+      some npc := by simp [Std.ExtDHashMap.get?_insert]
+  have hmi3 : ({ t2 with regs := t2.regs.insert Register.PC npc } : SailState).regs.get?
+      Register.minstret_increment = some inc := by simp [Std.ExtDHashMap.get?_insert]; exact hmi
+  have hm3 : ({ t2 with regs := t2.regs.insert Register.PC npc } : SailState).regs.get?
+      Register.minstret = some m := by simp [Std.ExtDHashMap.get?_insert]; exact hm
+  rw [runSail_bind_of_eq (runSail_readReg hpc3)]
+  simp only [pure_bind]
+  rw [runSail_bind_of_eq (runSail_readReg hmi3)]
+  cases inc
+  · simp [get_config_rvfi, sailCommit]
+  · simp only [Bool.true_and, if_true, bind_assoc]
+    rw [runSail_bind_of_eq (runSail_readReg hm3), runSail_bind_of_eq (runSail_writeReg _ _)]
+    simp [get_config_rvfi, sailCommit]
+
 end FlapjackRiscvCheck

@@ -11,7 +11,7 @@ open LeanRV64D LeanRV64D.Functions Flapjack.RiscV.L3
 
 set_option maxRecDepth 100000
 
-theorem dec_mul {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
+theorem dec_mul {t} (h : DecodeInv t) (rd rs1 rs2 : BitVec 5)  :
     runSail (encdec_backwards (Encode (.MulDiv (.MUL (rd, rs1, rs2))))) t = some (.MUL (.Regidx rs2, .Regidx rs1, .Regidx rd, ⟨.Low, .Signed, .Signed⟩), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -135,7 +135,7 @@ theorem dec_mul {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
     runSail_bind_of_eq (runSail_currentlyEnabled_Zmmul h)]
   try decode_finish
 
-theorem dec_mulhu {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
+theorem dec_mulhu {t} (h : DecodeInv t) (rd rs1 rs2 : BitVec 5)  :
     runSail (encdec_backwards (Encode (.MulDiv (.MULHU (rd, rs1, rs2))))) t = some (.MUL (.Regidx rs2, .Regidx rs1, .Regidx rd, ⟨.High, .Unsigned, .Unsigned⟩), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -259,7 +259,7 @@ theorem dec_mulhu {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
     runSail_bind_of_eq (runSail_currentlyEnabled_Zmmul h)]
   try decode_finish
 
-theorem dec_div {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
+theorem dec_div {t} (h : DecodeInv t) (rd rs1 rs2 : BitVec 5)  :
     runSail (encdec_backwards (Encode (.MulDiv (.DIV (rd, rs1, rs2))))) t = some (.DIV (.Regidx rs2, .Regidx rs1, .Regidx rd, false), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]

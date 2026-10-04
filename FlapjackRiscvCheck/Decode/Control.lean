@@ -11,7 +11,7 @@ open LeanRV64D LeanRV64D.Functions Flapjack.RiscV.L3
 
 set_option maxRecDepth 100000
 
-theorem dec_jal {s t} (h : ExecPre s t) (rd : BitVec 5) (imm : BitVec 20)  :
+theorem dec_jal {t} (h : DecodeInv t) (rd : BitVec 5) (imm : BitVec 20)  :
     runSail (encdec_backwards (Encode (.Branch (.JAL (rd, imm))))) t = some (.JAL (imm ++ 0#1, .Regidx rd), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -46,7 +46,7 @@ theorem dec_jal {s t} (h : ExecPre s t) (rd : BitVec 5) (imm : BitVec 20)  :
   decode_finish
   all_goals first | exact imm_S _ | (rw [imm_B]) | (rw [imm_J]) | rfl
 
-theorem dec_jalr {s t} (h : ExecPre s t) (rd rs1 : BitVec 5) (imm : BitVec 12)  :
+theorem dec_jalr {t} (h : DecodeInv t) (rd rs1 : BitVec 5) (imm : BitVec 12)  :
     runSail (encdec_backwards (Encode (.Branch (.JALR (rd, rs1, imm))))) t = some (.JALR (imm, .Regidx rs1, .Regidx rd), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -88,7 +88,7 @@ theorem dec_jalr {s t} (h : ExecPre s t) (rd rs1 : BitVec 5) (imm : BitVec 12)  
   decode_finish
   all_goals first | exact imm_S _ | (rw [imm_B]) | (rw [imm_J]) | rfl
 
-theorem dec_beq {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12)  :
+theorem dec_beq {t} (h : DecodeInv t) (rs1 rs2 : BitVec 5) (offs : BitVec 12)  :
     runSail (encdec_backwards (Encode (.Branch (.BEQ (rs1, rs2, offs))))) t = some (.BTYPE (offs ++ 0#1, .Regidx rs2, .Regidx rs1, .BEQ), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -139,7 +139,7 @@ theorem dec_beq {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12) 
   decode_finish
   all_goals first | exact imm_S _ | (rw [imm_B]) | (rw [imm_J]) | rfl
 
-theorem dec_bne {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12)  :
+theorem dec_bne {t} (h : DecodeInv t) (rs1 rs2 : BitVec 5) (offs : BitVec 12)  :
     runSail (encdec_backwards (Encode (.Branch (.BNE (rs1, rs2, offs))))) t = some (.BTYPE (offs ++ 0#1, .Regidx rs2, .Regidx rs1, .BNE), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -190,7 +190,7 @@ theorem dec_bne {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12) 
   decode_finish
   all_goals first | exact imm_S _ | (rw [imm_B]) | (rw [imm_J]) | rfl
 
-theorem dec_blt {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12)  :
+theorem dec_blt {t} (h : DecodeInv t) (rs1 rs2 : BitVec 5) (offs : BitVec 12)  :
     runSail (encdec_backwards (Encode (.Branch (.BLT (rs1, rs2, offs))))) t = some (.BTYPE (offs ++ 0#1, .Regidx rs2, .Regidx rs1, .BLT), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -241,7 +241,7 @@ theorem dec_blt {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12) 
   decode_finish
   all_goals first | exact imm_S _ | (rw [imm_B]) | (rw [imm_J]) | rfl
 
-theorem dec_bge {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12)  :
+theorem dec_bge {t} (h : DecodeInv t) (rs1 rs2 : BitVec 5) (offs : BitVec 12)  :
     runSail (encdec_backwards (Encode (.Branch (.BGE (rs1, rs2, offs))))) t = some (.BTYPE (offs ++ 0#1, .Regidx rs2, .Regidx rs1, .BGE), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -292,7 +292,7 @@ theorem dec_bge {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12) 
   decode_finish
   all_goals first | exact imm_S _ | (rw [imm_B]) | (rw [imm_J]) | rfl
 
-theorem dec_bltu {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12)  :
+theorem dec_bltu {t} (h : DecodeInv t) (rs1 rs2 : BitVec 5) (offs : BitVec 12)  :
     runSail (encdec_backwards (Encode (.Branch (.BLTU (rs1, rs2, offs))))) t = some (.BTYPE (offs ++ 0#1, .Regidx rs2, .Regidx rs1, .BLTU), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -343,7 +343,7 @@ theorem dec_bltu {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12)
   decode_finish
   all_goals first | exact imm_S _ | (rw [imm_B]) | (rw [imm_J]) | rfl
 
-theorem dec_bgeu {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12)  :
+theorem dec_bgeu {t} (h : DecodeInv t) (rs1 rs2 : BitVec 5) (offs : BitVec 12)  :
     runSail (encdec_backwards (Encode (.Branch (.BGEU (rs1, rs2, offs))))) t = some (.BTYPE (offs ++ 0#1, .Regidx rs2, .Regidx rs1, .BGEU), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]

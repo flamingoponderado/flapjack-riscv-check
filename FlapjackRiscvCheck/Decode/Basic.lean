@@ -60,6 +60,15 @@ macro "decode_finish" : tactic =>
 
 /-! ## Extension checks reached by the decoder prefix -/
 
+/-- What the decoder prefix reads besides the word: machine mode, no landing pads, `misa.M`. -/
+structure DecodeInv (t : SailState) : Prop where
+  machine : t.regs.get? Register.cur_privilege = some .Machine
+  noLandingPads : ∃ c, t.regs.get? Register.mseccfg = some c ∧ _get_Seccfg_MLPE c = 0
+  misaM : ∃ m, t.regs.get? Register.misa = some m ∧ _get_Misa_M m = 1
+
+theorem ExecPre.decodeInv {s t} (h : ExecPre s t) : DecodeInv t :=
+  ⟨h.machine, h.noLandingPads, h.misaM⟩
+
 theorem runSail_currentlyEnabled_pause (t : SailState) :
     runSail (currentlyEnabled .Ext_Zihintpause) t = some (true, t) := by
   rw [currentlyEnabled]; simp [hartSupports]
@@ -72,20 +81,20 @@ theorem runSail_currentlyEnabled_ntl (t : SailState) :
     runSail (currentlyEnabled .Ext_Zihintntl) t = some (true, t) := by
   rw [currentlyEnabled]; simp [hartSupports]
 
-theorem runSail_currentlyEnabled_M {s t} (h : ExecPre s t) :
+theorem runSail_currentlyEnabled_M {t} (h : DecodeInv t) :
     runSail (currentlyEnabled .Ext_M) t = some (true, t) := by
   obtain ⟨m, hm, hM⟩ := h.misaM
   rw [currentlyEnabled]
   rw [runSail_bind_of_eq (runSail_readReg hm)]
   simp [hartSupports, hM]
 
-theorem runSail_currentlyEnabled_Zmmul {s t} (h : ExecPre s t) :
+theorem runSail_currentlyEnabled_Zmmul {t} (h : DecodeInv t) :
     runSail (currentlyEnabled .Ext_Zmmul) t = some (true, t) := by
   rw [currentlyEnabled]
   rw [runSail_bind_of_eq (runSail_currentlyEnabled_M h)]
   simp [hartSupports]
 
-theorem runSail_currentlyEnabled_zicfilp {s t} (h : ExecPre s t) :
+theorem runSail_currentlyEnabled_zicfilp {t} (h : DecodeInv t) :
     runSail (currentlyEnabled .Ext_Zicfilp) t = some (false, t) := by
   obtain ⟨c, hc, hL⟩ := h.noLandingPads
   rw [currentlyEnabled]

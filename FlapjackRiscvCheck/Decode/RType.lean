@@ -11,7 +11,7 @@ open LeanRV64D LeanRV64D.Functions Flapjack.RiscV.L3
 
 set_option maxRecDepth 100000
 
-theorem dec_add {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5) (hrd : rd ≠ 0) :
+theorem dec_add {t} (h : DecodeInv t) (rd rs1 rs2 : BitVec 5) (hrd : rd ≠ 0) :
     runSail (encdec_backwards (Encode (.ArithR (.ADD (rd, rs1, rs2))))) t = some (.RTYPE (.Regidx rs2, .Regidx rs1, .Regidx rd, .ADD), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -81,7 +81,7 @@ theorem dec_add {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5) (hrd : rd ≠ 0)
   try guard_simp hw [f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16]
   decode_finish
 
-theorem dec_sub {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
+theorem dec_sub {t} (h : DecodeInv t) (rd rs1 rs2 : BitVec 5)  :
     runSail (encdec_backwards (Encode (.ArithR (.SUB (rd, rs1, rs2))))) t = some (.RTYPE (.Regidx rs2, .Regidx rs1, .Regidx rd, .SUB), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -166,7 +166,7 @@ theorem dec_sub {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
   try guard_simp hw [f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16]
   decode_finish
 
-theorem dec_and {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
+theorem dec_and {t} (h : DecodeInv t) (rd rs1 rs2 : BitVec 5)  :
     runSail (encdec_backwards (Encode (.ArithR (.AND (rd, rs1, rs2))))) t = some (.RTYPE (.Regidx rs2, .Regidx rs1, .Regidx rd, .AND), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -241,7 +241,7 @@ theorem dec_and {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
   try guard_simp hw [f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16]
   decode_finish
 
-theorem dec_or {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
+theorem dec_or {t} (h : DecodeInv t) (rd rs1 rs2 : BitVec 5)  :
     runSail (encdec_backwards (Encode (.ArithR (.OR (rd, rs1, rs2))))) t = some (.RTYPE (.Regidx rs2, .Regidx rs1, .Regidx rd, .OR), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -318,7 +318,7 @@ theorem dec_or {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
   try guard_simp hw [f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16]
   decode_finish
 
-theorem dec_xor {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
+theorem dec_xor {t} (h : DecodeInv t) (rd rs1 rs2 : BitVec 5)  :
     runSail (encdec_backwards (Encode (.ArithR (.XOR (rd, rs1, rs2))))) t = some (.RTYPE (.Regidx rs2, .Regidx rs1, .Regidx rd, .XOR), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -397,7 +397,7 @@ theorem dec_xor {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
   try guard_simp hw [f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16]
   decode_finish
 
-theorem dec_sltu {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
+theorem dec_sltu {t} (h : DecodeInv t) (rd rs1 rs2 : BitVec 5)  :
     runSail (encdec_backwards (Encode (.ArithR (.SLTU (rd, rs1, rs2))))) t = some (.RTYPE (.Regidx rs2, .Regidx rs1, .Regidx rd, .SLTU), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -470,7 +470,7 @@ theorem dec_sltu {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
   try guard_simp hw [f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16]
   decode_finish
 
-theorem dec_sll {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
+theorem dec_sll {t} (h : DecodeInv t) (rd rs1 rs2 : BitVec 5)  :
     runSail (encdec_backwards (Encode (.Shift (.SLL (rd, rs1, rs2))))) t = some (.RTYPE (.Regidx rs2, .Regidx rs1, .Regidx rd, .SLL), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -551,7 +551,7 @@ theorem dec_sll {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
   try guard_simp hw [f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16]
   decode_finish
 
-theorem dec_srl {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
+theorem dec_srl {t} (h : DecodeInv t) (rd rs1 rs2 : BitVec 5)  :
     runSail (encdec_backwards (Encode (.Shift (.SRL (rd, rs1, rs2))))) t = some (.RTYPE (.Regidx rs2, .Regidx rs1, .Regidx rd, .SRL), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]
@@ -634,7 +634,7 @@ theorem dec_srl {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
   try guard_simp hw [f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16]
   decode_finish
 
-theorem dec_sra {s t} (h : ExecPre s t) (rd rs1 rs2 : BitVec 5)  :
+theorem dec_sra {t} (h : DecodeInv t) (rd rs1 rs2 : BitVec 5)  :
     runSail (encdec_backwards (Encode (.Shift (.SRA (rd, rs1, rs2))))) t = some (.RTYPE (.Regidx rs2, .Regidx rs1, .Regidx rd, .SRA), t) := by
   obtain ⟨tail, htail⟩ := encdec_backwards_prefix
   rw [htail]

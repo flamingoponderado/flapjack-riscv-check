@@ -45,3 +45,4 @@ import FlapjackRiscvCheck.Decode.Control
 import FlapjackRiscvCheck.Sail.Mem.Fetch
 import FlapjackRiscvCheck.Sail.Step
 import FlapjackRiscvCheck.L3.Step
+import FlapjackRiscvCheck.Decode.Dispatch
