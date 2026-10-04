@@ -14,6 +14,24 @@ The goal is a simulation theorem: on the instructions Flapjack's backend emits,
 and from related machine states, every L3 step is matched by a Sail step. The
 approach is in [`docs/PLAN.md`](docs/PLAN.md).
 
+## Prior work
+
+The approach and target follow the Armv8 version of the same problem:
+
+> Hrutvik Kanabar, Anthony C. J. Fox, Magnus O. Myreen.
+> *Taming an Authoritative Armv8 ISA Specification: L3 Validation and CakeML
+> Compiler Verification.* ITP 2022, LIPIcs 237, paper 20.
+> [doi:10.4230/LIPIcs.ITP.2022.20](https://doi.org/10.4230/LIPIcs.ITP.2022.20)
+
+That paper proves in HOL4 that CakeML's L3 Armv8 model simulates Arm's
+official Sail specification, then re-targets the CakeML compiler correctness
+theorem. This project does the same for RISC-V in Lean: it proves that
+Flapjack's port of the L3 RISC-V model simulates the Sail RISC-V model, then
+transfers Flapjack's Pancake compiler theorem.
+
+The per-instruction proof technique against the Lean Sail extraction is
+modelled on [riscv-zkvm](https://github.com/Verified-zkEVM/riscv-zkvm).
+
 ## Build
 
 ```sh
