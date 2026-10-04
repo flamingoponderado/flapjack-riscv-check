@@ -74,6 +74,7 @@ structure ExecPost (s s' : L3State) (t t' : SailState) : Prop where
   frame : SailRegFrame t t'
   mem : ∀ D, MemRel s t D → MemRel s' t' D
   l3frame : L3Frame s s'
+  npc : ∃ a, l3NextPC s' = some a
 
 theorem ExecPre.l3NextPC {s t} (h : ExecPre s t) : l3NextPC s = some (PC s + 4) := by
   simp [FlapjackRiscvCheck.l3NextPC, h.nextFetch, h.skip]
@@ -87,5 +88,6 @@ theorem ExecPost.of_write {s t} (h : ExecPre s t) (rd : BitVec 5) (v : BitVec 64
   frame _ hr _ := sailSetGpr_get?_of_not_gpr _ _ _ hr
   mem _ hm := hm.of_eq (l3_MEM8_write'GPR s rd v) (sailSetGpr_mem _ _ _)
   l3frame := L3Frame.ofWrite s rd v
+  npc := ⟨_, by rw [l3NextPC_write'GPR, h.l3NextPC]⟩
 
 end FlapjackRiscvCheck

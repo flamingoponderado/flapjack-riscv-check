@@ -49,6 +49,7 @@ theorem ExecPre.post_jump {s t} (h : ExecPre s t) (a : BitVec 64) :
   frame r _ hr := by simp [Std.ExtDHashMap.get?_insert, Ne.symm hr]
   mem _ hm := hm.of_eq rfl rfl
   l3frame := L3Frame.ofBranchTo s a
+  npc := ⟨a, l3NextPC_branchTo a s⟩
 
 theorem ExecPre.post_id {s t} (h : ExecPre s t) : ExecPost s s t t where
   rel := h.rel
@@ -56,6 +57,7 @@ theorem ExecPre.post_id {s t} (h : ExecPre s t) : ExecPost s s t t where
   frame _ _ _ := rfl
   mem _ hm := hm
   l3frame := ⟨rfl, rfl, rfl, rfl, rfl⟩
+  npc := ⟨_, h.l3NextPC⟩
 
 theorem lsb_add_even (pc x : BitVec 64) (hpc : pc.getLsbD 0 = false) :
     (pc + x <<< 1).getLsbD 0 = false := by

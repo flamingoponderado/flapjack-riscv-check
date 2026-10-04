@@ -19,7 +19,7 @@ theorem ExecPre.post_jump_link {s t} (h : ExecPre s t) (a v : BitVec 64) (rd : B
     ExecPost s (branchTo a («write'GPR» (v, rd) s)) t
       (sailSetGpr { t with regs := t.regs.insert Register.nextPC a } rd v) := by
   have hj := h.post_jump a
-  refine ⟨⟨fun n => ?_, ?_⟩, ?_, ?_, ?_, (L3Frame.ofWrite s rd v).trans (L3Frame.ofBranchTo _ a)⟩
+  refine ⟨⟨fun n => ?_, ?_⟩, ?_, ?_, ?_, (L3Frame.ofWrite s rd v).trans (L3Frame.ofBranchTo _ a), ⟨a, l3NextPC_branchTo _ _⟩⟩
   · rw [sailGpr_sailSetGpr, l3_GPR_branchTo, l3_GPR_write'GPR]
     split
     · rfl
