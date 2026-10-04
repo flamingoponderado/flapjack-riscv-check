@@ -30,6 +30,7 @@ structure ExecPre (s : L3State) (t : SailState) : Prop where
   bareVM : (s.c_MCSR s.procID).mstatus.VM = 0#5
   pcEven : (PC s).getLsbD 0 = false
   misaC : ∃ m, t.regs.get? Register.misa = some m ∧ _get_Misa_C m = 1
+  misaM : ∃ m, t.regs.get? Register.misa = some m ∧ _get_Misa_M m = 1
   machine : t.regs.get? Register.cur_privilege = some .Machine
   noLandingPads : ∃ c, t.regs.get? Register.mseccfg = some c ∧ _get_Seccfg_MLPE c = 0
 

@@ -32,3 +32,13 @@ import FlapjackRiscvCheck.Sail.Mem.Write
 import FlapjackRiscvCheck.L3.Store
 import FlapjackRiscvCheck.Exec.Store
 import FlapjackRiscvCheck.Exec.Dispatch
+import FlapjackRiscvCheck.Sail.DecodePrefixDef
+import FlapjackRiscvCheck.Sail.DecodePrefix
+import FlapjackRiscvCheck.Decode.Basic
+import FlapjackRiscvCheck.Decode.Encoding
+import FlapjackRiscvCheck.Decode.Imm
+import FlapjackRiscvCheck.Decode.RType
+import FlapjackRiscvCheck.Decode.MulDiv
+import FlapjackRiscvCheck.Decode.IType
+import FlapjackRiscvCheck.Decode.Mem
+import FlapjackRiscvCheck.Decode.Control
