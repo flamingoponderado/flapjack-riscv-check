@@ -129,7 +129,7 @@ theorem sailCommit_mem (t2 : SailState) (npc : BitVec 64) (inc : Bool) (m : BitV
 /-- One step of both models from related states. -/
 theorem step_sim {s t D i} (h : StepRel s t D) (hs : StepSide s t D i) (n : Nat) :
     ∃ s' t', NextRISCV s = some s' ∧ runSail (try_step n false) t = some (false, t') ∧
-      StepRel s' t' D := by
+      StepRel s' t' D ∧ RegsAgree t t' := by
   obtain ⟨si, hsi⟩ := Option.isSome_iff_exists.mp hs.tier1
   have hlow := encode_low_bits i si hsi
   generalize hw : Encode i = w at hlow
@@ -223,7 +223,7 @@ theorem step_sim {s t D i} (h : StepRel s t D) (hs : StepSide s t D i) (n : Nat)
     simp only [«write'PC», «write'NextFetch»]; rw [hpost.l3frame.mcsr]; subst hs1; rfl
   have hpid : («write'PC» npc («write'NextFetch» none (Run i s1))).procID = s.procID := by
     simp only [«write'PC», «write'NextFetch»]; rw [hpost.l3frame.procID]; subst hs1; rfl
-  exact {
+  refine ⟨{
     rel := ⟨fun n => by rw [sailCommit_gpr, l3_GPR_write'PC, l3_GPR_write'NextFetch]; exact hpost.rel.gpr n,
       by rw [sailCommit_pc, l3_PC_write'PC]⟩
     mem := by
@@ -241,6 +241,6 @@ theorem step_sim {s t D i} (h : StepRel s t D) (hs : StepSide s t D i) (n : Nat)
     noLandingPads := by rw [ha3 _ rfl]; exact h.noLandingPads
     memInv := h.memInv.transfer ha3
     pmp := h.pmp.transfer ha3
-    stepInv := h.stepInv.transfer ha3 (sailCommit_minstret _ _ _ _ hm2) }
+    stepInv := h.stepInv.transfer ha3 (sailCommit_minstret _ _ _ _ hm2) }, ha3⟩
 
 end FlapjackRiscvCheck
