@@ -14,6 +14,36 @@ The goal is a simulation theorem: on the instructions Flapjack's backend emits,
 and from related machine states, every L3 step is matched by a Sail step. The
 approach is in [`docs/PLAN.md`](docs/PLAN.md).
 
+> [!WARNING]
+> **The two models are not equivalent in general.** The proof covers only the
+> 37 instructions Flapjack's backend emits, under these restrictions:
+>
+> - **Hint encodings are excluded.** Sail decodes `ADD x0, x0, x2..x5` as a
+>   Zihintntl `NTL` hint and `ORI x0, rs1, imm` (with `imm[4:0] ∈ {0,1,3}`) as
+>   a Zicbop prefetch. L3 decodes both as plain ALU ops writing `x0`.
+> - **Misaligned loads and stores are excluded.** L3 performs them, while Sail
+>   traps or splits them depending on the PMA region.
+> - **Memory must be plain RAM.** Sail's memory is a partial map with PMA
+>   regions and MMIO windows (CLINT, signature, HTIF); L3's `MEM8` is total.
+>   Accesses must lie in a readable/writable/executable PMA region, miss the
+>   MMIO windows, and touch only addresses in the related domain.
+> - **Sail must be configured to match L3's assumptions:**
+>   - machine mode with `mstatus.MPRV = 0`;
+>   - pointer masking off and all PMP entries OFF;
+>   - `misa.C = misa.M = 1`;
+>   - `mseccfg.MLPE = 0` and `elp = 0` (Sail's JALR otherwise updates
+>     Zicfilp landing-pad state, which L3 does not model);
+>   - `mstatus.MIE = 0` (no interrupts);
+>   - the PC 4-aligned.
+> - **Not covered:**
+>   - floating point (every Sail FP primitive is an uninterpreted `axiom`);
+>   - CSRs, traps, privilege changes and virtual memory (L3 follows the old
+>     privileged spec 1.7);
+>   - atomics, and RV64IM instructions outside Flapjack's set.
+> - **Flapjack's compiler theorem has not yet been transferred to Sail.**
+>
+> Details are in [`docs/PLAN.md`](docs/PLAN.md).
+
 ## Prior work
 
 The approach and target follow the Armv8 version of the same problem:
