@@ -144,18 +144,69 @@ Each of these either becomes a side condition or is reported as a finding:
   never the umbrella. Split proofs by instruction family. Keep
   `--tstack=400000`.
 
-## Status (2026-10-04)
+## Status (2026-10-05)
 
-- The project builds against flapjack `main` and sail-riscv-lean `main`, with
-  both commits pinned in `lake-manifest.json`.
-- `RegRel` covers GPRs and PC.
-- The Sail register read/write lemmas (`Sail/Regs.lean`, `Sail/RegsFrame.lean`)
-  and the L3 ones (`L3/Regs.lean`) are proved.
-- The tier-1 R-type instructions are proved against `execute_RTYPE`:
-  ADD, SUB, AND, OR, XOR, SLTU, SLL, SRL, SRA (`Exec/ALU.lean`). The proofs
-  use only `propext`, `Classical.choice` and `Quot.sound`.
-- The shifts and SLTU need the L3 side condition `mcpuid.ArchBase = 2`, which
-  `riscvOk` already includes, so that `in32BitMode` is `false`.
+Milestones 1–5 are done; see "Main theorems" in the README. Milestone 6, transferring
+Flapjack's top theorem, is still open (below). Milestone 7 (tier 2) has not been
+started.
+
+- **Execute (`Exec/`):** `exec_sim` covers all 37 tier-1 instructions against
+  Sail's `execute`.
+- **Decode (`Decode/`):** `sail_decode_sim` and `l3_decode_sim` show that both
+  models decode `Encode i` as expected. Sail's 56k-line decoder is handled by
+  divide and conquer:
+  - `scripts/gen-decode-prefix.py` copies its first 41 pattern blocks into one
+    definition each.
+  - `encdec_backwards = decodePrefix tail` holds by `rfl`.
+  - `scripts/gen-decode-proofs.py` steps through the blocks for each
+    instruction. Each guard is decided by `omega` on the encoded word's numeric
+    formula.
+- **Step (`Step/Sim.lean`):** `step_sim` relates `NextRISCV` to `try_step`. This
+  covers interrupt dispatch, fetch, decode, the landing-pad check, `execute`,
+  `tick_pc` and `minstret`.
+- **Run (`Step/Run.lean`):** `run_sim` iterates the step simulation.
+- **Anti-vacuity (`Witness.lean`):** concrete states satisfy every hypothesis,
+  and `run_sim` executes one step on them.
+- **Trusted base:** `scripts/check-axioms.sh` checks for no `sorry`, no
+  `native_decide`/`bv_decide`, and only Lean's three classical axioms plus the
+  functions the Sail extraction declares as `axiom`.
+
+## Divergences and assumptions found
+
+- **Hint encodings.** Sail decodes `ADD x0, x0, x2..x5` as Zihintntl `NTL` and
+  `ORI x0, rs1, imm` (with `imm[4:0] ∈ {0,1,3}`) as a Zicbop prefetch. L3
+  decodes them as plain ALU ops with `rd = x0`, so they are excluded (`HintFree`).
+  Both are architectural no-ops, but the prefetch probes PMA/PMP.
+- **Misaligned accesses.** L3 performs them; Sail's behaviour depends on the
+  PMA. Loads and stores are assumed aligned (`SailAccessOK.aligned`).
+- **Memory.** Sail's memory is a partial map with PMA regions and MMIO windows,
+  whereas L3 has a total `MEM8`. Accesses must lie in a readable/writable PMA
+  region, miss CLINT/signature/HTIF, and (for loads and fetch) hit the related
+  domain `D`.
+- **Compressed instructions and jump alignment.** These match when
+  `misa.C = 1`. The fetch path assumes a 4-aligned PC, which `riscvOk`
+  provides.
+- **Zicfilp.** Sail's JALR updates `elp` unless `mseccfg.MLPE = 0`. That, plus
+  `elp = 0`, is part of the invariant.
+- **Interrupts** are excluded by `mstatus.MIE = 0` in machine mode.
+- **M extension.** DIV needs `misa.M = 1` in Sail, which is in the invariant.
+
+## Open: transferring the compiler theorem (milestone 6)
+
+`panToTargetCompileSemanticsRiscV` is stated over CakeML's machine semantics
+with `next = riscvNext`, including FFI interference and halting. Moving it to
+Sail needs two things:
+
+1. A Sail-based `MachineConfig` whose `next` is `try_step` on related states.
+   `run_sim` relates the two runs.
+2. A proof that every execution of compiled Pancake code meets `GoodRun`. The
+   code region must hold hint-free tier-1 encodings (`riscvEnc` produces
+   `Encode i`), every load/store must be aligned and inside a RAM region in
+   `D`, and every PC must stay 4-aligned.
+
+Part 2 needs facts from Flapjack's compiler-correctness proof (code
+installation, `target_state_rel`, the memory domain). That is a separate
+project on the Flapjack side.
 
 ## Build notes
 

@@ -32,6 +32,44 @@ transfers Flapjack's Pancake compiler theorem.
 The per-instruction proof technique against the Lean Sail extraction is
 modelled on [riscv-zkvm](https://github.com/Verified-zkEVM/riscv-zkvm).
 
+## Main theorems
+
+All are `sorry`-free; `scripts/check-axioms.sh` lists their axioms.
+
+- `exec_sim` (`Exec/Dispatch.lean`): for each of the 37 instructions Flapjack's
+  backend emits, L3 `Run i` and Sail `execute (toSail i)` agree. The agreement
+  covers registers, the next PC, memory (`MemRel`) and a frame on everything
+  else.
+- `sail_decode_sim` / `l3_decode_sim` (`Decode/Dispatch.lean`): both models
+  decode the encoding `Encode i`.
+- `step_sim` (`Step/Sim.lean`): one L3 `NextRISCV` step matches one Sail
+  `try_step` from related states (`StepRel`), under per-step side conditions
+  (`StepSide`):
+  - the word at `PC` encodes a tier-1, hint-free instruction;
+  - the fetch and any load/store are plain aligned RAM accesses.
+- `run_sim` (`Step/Run.lean`): the same for `k` steps, along any L3 run that
+  meets the side conditions (`GoodRun`).
+- `Witness.run_sim_nonvacuous`: concrete states satisfy all the hypotheses.
+
+The Sail-side invariants are:
+
+- machine mode, `MPRV = 0`;
+- pointer masking off, PMP entries all OFF;
+- `misa.C = misa.M = 1`;
+- `mseccfg.MLPE = 0`, `elp = 0`;
+- `mstatus.MIE = 0`;
+- the hart is active.
+
+The L3 side assumes Flapjack's `riscvOk` conditions. Divergences found, and the
+open step of transferring Flapjack's compiler theorem, are in
+[`docs/PLAN.md`](docs/PLAN.md).
+
+Some files are generated:
+
+- `scripts/gen-decode-prefix.py` produces `Sail/DecodePrefixDef.lean`.
+- `scripts/gen-decode-proofs.py` produces `Decode/{RType,MulDiv,IType,Mem,Control}.lean`.
+- `scripts/gen-decode-dispatch.py` produces `Decode/Dispatch.lean`.
+
 ## Build
 
 ```sh
