@@ -17,3 +17,7 @@ import FlapjackRiscvCheck.L3.Control
 import FlapjackRiscvCheck.Exec.Contract
 import FlapjackRiscvCheck.Exec.Branch
 import FlapjackRiscvCheck.Exec.Jump
+import FlapjackRiscvCheck.Sail.Loop
+import FlapjackRiscvCheck.Sail.Mem.Inv
+import FlapjackRiscvCheck.Sail.Mem.Addr
+import FlapjackRiscvCheck.Sail.Mem.Pmp

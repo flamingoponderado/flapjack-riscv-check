@@ -45,4 +45,9 @@ theorem runSail_map {α β : Type} (f : α → β) (x : SailM α) (t : SailState
   simp only [EStateM.run, Functor.map, EStateM.map]
   cases x t <;> rfl
 
+theorem runSail_map_ok {ε α : Type} {m : SailM α} {t t' : SailState} {a : α}
+    (h : runSail m t = some (a, t')) :
+    runSail ((Except.ok <$> m : SailM (Except ε α))) t = some (.ok a, t') := by
+  rw [runSail_map, h]; rfl
+
 end FlapjackRiscvCheck
