@@ -31,3 +31,4 @@ import FlapjackRiscvCheck.Exec.Load
 import FlapjackRiscvCheck.Sail.Mem.Write
 import FlapjackRiscvCheck.L3.Store
 import FlapjackRiscvCheck.Exec.Store
+import FlapjackRiscvCheck.Exec.Dispatch
