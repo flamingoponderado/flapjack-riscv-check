@@ -21,3 +21,7 @@ import FlapjackRiscvCheck.Sail.Loop
 import FlapjackRiscvCheck.Sail.Mem.Inv
 import FlapjackRiscvCheck.Sail.Mem.Addr
 import FlapjackRiscvCheck.Sail.Mem.Pmp
+import FlapjackRiscvCheck.Sail.Mem.Pma
+import FlapjackRiscvCheck.Sail.Mem.Phys
+import FlapjackRiscvCheck.Sail.Mem.Page
+import FlapjackRiscvCheck.Sail.Mem.Read

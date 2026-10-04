@@ -34,4 +34,8 @@ theorem runSail_bind_of_eq {α β : Type} {m : SailM α} {f : α → SailM β} {
     runSail (m >>= f) t = runSail (f a) t' := by
   rw [runSail_bind, h]
 
+@[simp] theorem runSail_assert_true (msg : String) (t : SailState) :
+    runSail (Sail.ConcurrencyInterfaceV1.PreSail.assert true msg : SailM Unit) t = some ((), t) :=
+  rfl
+
 end FlapjackRiscvCheck
