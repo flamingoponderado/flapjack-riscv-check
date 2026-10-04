@@ -7,3 +7,6 @@ import FlapjackRiscvCheck.L3.Arch
 import FlapjackRiscvCheck.Bridge
 import FlapjackRiscvCheck.Relation
 import FlapjackRiscvCheck.Exec.ALU
+import FlapjackRiscvCheck.BridgeM
+import FlapjackRiscvCheck.Exec.Imm
+import FlapjackRiscvCheck.Exec.MulDiv
