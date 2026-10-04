@@ -16,7 +16,7 @@ namespace FlapjackRiscvCheck
 open LeanRV64D LeanRV64D.Functions Flapjack.RiscV.L3
 
 theorem ExecPre.post_jump_link {s t} (h : ExecPre s t) (a v : BitVec 64) (rd : BitVec 5) :
-    ExecPost (branchTo a («write'GPR» (v, rd) s)) t
+    ExecPost s (branchTo a («write'GPR» (v, rd) s)) t
       (sailSetGpr { t with regs := t.regs.insert Register.nextPC a } rd v) := by
   have hj := h.post_jump a
   refine ⟨⟨fun n => ?_, ?_⟩, ?_, ?_, ?_⟩
@@ -31,7 +31,8 @@ theorem ExecPre.post_jump_link {s t} (h : ExecPre s t) (a v : BitVec 64) (rd : B
   · intro r hr hn
     rw [sailSetGpr_get?_of_not_gpr _ _ _ hr]
     exact hj.frame r hr hn
-  · rw [sailSetGpr_mem]
+  · intro D hm
+    exact hm.of_eq (by simp) (by rw [sailSetGpr_mem])
 
 theorem runSail_get_next_pc {s t} (h : ExecPre s t) :
     runSail (get_next_pc ()) t = some (PC s + 4, t) :=
@@ -39,7 +40,7 @@ theorem runSail_get_next_pc {s t} (h : ExecPre s t) :
 
 theorem jal_sim {s t} (h : ExecPre s t) (rd : BitVec 5) (imm : BitVec 20) :
     ∃ t', runSail (execute_JAL (imm ++ 0#1) (.Regidx rd)) t =
-      some (RETIRE_SUCCESS, t') ∧ ExecPost («dfn'JAL» (rd, imm) s) t t' := by
+      some (RETIRE_SUCCESS, t') ∧ ExecPost s («dfn'JAL» (rd, imm) s) t t' := by
   obtain ⟨m, hm, hC⟩ := h.misaC
   have heven := lsb_add_even (PC s) (BitVec.signExtend 64 imm) h.pcEven
   refine ⟨sailSetGpr { t with regs := t.regs.insert Register.nextPC (PC s +
@@ -81,7 +82,7 @@ theorem sail_update_lsb (x : BitVec 64) :
 
 theorem jalr_sim {s t} (h : ExecPre s t) (rd rs1 : BitVec 5) (imm : BitVec 12) :
     ∃ t', runSail (execute_JALR imm (.Regidx rs1) (.Regidx rd)) t =
-      some (RETIRE_SUCCESS, t') ∧ ExecPost («dfn'JALR» (rd, rs1, imm) s) t t' := by
+      some (RETIRE_SUCCESS, t') ∧ ExecPost s («dfn'JALR» (rd, rs1, imm) s) t t' := by
   obtain ⟨m, hm, hC⟩ := h.misaC
   let a := (GPR rs1 s + BitVec.signExtend 64 imm) &&& BitVec.signExtend 64 (BitVec.ofNat 2 2)
   have heven : a.getLsbD 0 = false := by simp [a]

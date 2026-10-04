@@ -47,4 +47,12 @@ theorem l3NextPC_write'GPR (s : riscv_state) (n : BitVec 5) (v : BitVec 64) :
     l3NextPC («write'GPR» (v, n) s) = l3NextPC s := by
   simp [l3NextPC, l3_PC_write'GPR]
 
+@[simp] theorem l3_MEM8_branchTo (a : BitVec 64) (s : riscv_state) :
+    (branchTo a s).MEM8 = s.MEM8 := rfl
+
+@[simp] theorem l3_MEM8_write'GPR (s : riscv_state) (n : BitVec 5) (v : BitVec 64) :
+    («write'GPR» (v, n) s).MEM8 = s.MEM8 := by
+  simp only [«write'GPR», «write'gpr»]
+  split <;> rfl
+
 end FlapjackRiscvCheck

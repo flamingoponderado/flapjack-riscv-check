@@ -6,17 +6,13 @@ import FlapjackRiscvCheck.L3.Load
 /-!
 # Loads: LD, LWU, LHU, LBU
 
-`MemRel s t D`: on the address domain `D`, Sail's partial memory holds exactly
-L3's `MEM8`. A load whose bytes lie in `D` and which Sail performs as a plain
+A load whose bytes lie in `D` and which Sail performs as a plain
 RAM access (`SailAccessOK`) reads the same value on both sides.
 -/
 
 namespace FlapjackRiscvCheck
 
 open LeanRV64D LeanRV64D.Functions Flapjack.RiscV.L3
-
-structure MemRel (s : L3State) (t : SailState) (D : BitVec 64 → Prop) : Prop where
-  agree : ∀ a, D a → t.mem.get? a.toNat = some (s.MEM8 a)
 
 theorem toNat_add_small {A : BitVec 64} {w i : Nat} (hw : w = 1 ∨ w = 2 ∨ w = 4 ∨ w = 8)
     (hal : A.toNat % w = 0) (hi : i < w) : (A + BitVec.ofNat 64 i).toNat = A.toNat + i := by
@@ -58,7 +54,7 @@ theorem extend_value_toNat_64 (v : BitVec (8 * 8)) : (extend_value false v).toNa
 /-- Assemble a load simulation from the Sail and L3 characterisations. -/
 theorem load_post {s t} (h : ExecPre s t) {rd : BitVec 5} {l3s : L3State} {v : BitVec 64}
     {sv : BitVec 64} (hl3 : l3s = «write'GPR» (v, rd) s) (heq : sv.toNat = v.toNat) :
-    ExecPost l3s t (sailSetGpr t rd sv) := by
+    ExecPost s l3s t (sailSetGpr t rd sv) := by
   rw [BitVec.eq_of_toNat_eq heq, hl3]
   exact ExecPost.of_write h rd v
 
@@ -66,7 +62,7 @@ theorem ld_sim {s t} {D : BitVec 64 → Prop} (h : ExecPre s t) (hm : MemRel s t
     (rd rs1 : BitVec 5) (imm : BitVec 12) (hacc : SailAccessOK t (l3EA s rs1 imm) 8 false)
     (hD : ∀ i < 8, D (l3EA s rs1 imm + BitVec.ofNat 64 i)) :
     ∃ t', runSail (execute_LOAD imm (.Regidx rs1) (.Regidx rd) false 8) t =
-      some (RETIRE_SUCCESS, t') ∧ ExecPost («dfn'LD» (rd, rs1, imm) s) t t' := by
+      some (RETIRE_SUCCESS, t') ∧ ExecPost s («dfn'LD» (rd, rs1, imm) s) t t' := by
   obtain ⟨sv, hsv, hr⟩ := sail_load (rd := rd) h hm false hacc hD
   obtain ⟨v, hl3, hv⟩ := l3_ld s rd rs1 imm h.rv64 h.bareVM hacc.aligned
   exact ⟨_, hr, load_post h hl3 (by rw [extend_value_toNat_64, hsv, hv])⟩
@@ -75,7 +71,7 @@ theorem lwu_sim {s t} {D : BitVec 64 → Prop} (h : ExecPre s t) (hm : MemRel s 
     (rd rs1 : BitVec 5) (imm : BitVec 12) (hacc : SailAccessOK t (l3EA s rs1 imm) 4 false)
     (hD : ∀ i < 4, D (l3EA s rs1 imm + BitVec.ofNat 64 i)) :
     ∃ t', runSail (execute_LOAD imm (.Regidx rs1) (.Regidx rd) true 4) t =
-      some (RETIRE_SUCCESS, t') ∧ ExecPost («dfn'LWU» (rd, rs1, imm) s) t t' := by
+      some (RETIRE_SUCCESS, t') ∧ ExecPost s («dfn'LWU» (rd, rs1, imm) s) t t' := by
   obtain ⟨sv, hsv, hr⟩ := sail_load (rd := rd) h hm true hacc hD
   obtain ⟨v, hl3, hv⟩ := l3_lwu s rd rs1 imm h.rv64 h.bareVM hacc.aligned
   exact ⟨_, hr, load_post h hl3 (by rw [extend_value_toNat_unsigned _ (by decide), hsv, hv])⟩
@@ -84,7 +80,7 @@ theorem lhu_sim {s t} {D : BitVec 64 → Prop} (h : ExecPre s t) (hm : MemRel s 
     (rd rs1 : BitVec 5) (imm : BitVec 12) (hacc : SailAccessOK t (l3EA s rs1 imm) 2 false)
     (hD : ∀ i < 2, D (l3EA s rs1 imm + BitVec.ofNat 64 i)) :
     ∃ t', runSail (execute_LOAD imm (.Regidx rs1) (.Regidx rd) true 2) t =
-      some (RETIRE_SUCCESS, t') ∧ ExecPost («dfn'LHU» (rd, rs1, imm) s) t t' := by
+      some (RETIRE_SUCCESS, t') ∧ ExecPost s («dfn'LHU» (rd, rs1, imm) s) t t' := by
   obtain ⟨sv, hsv, hr⟩ := sail_load (rd := rd) h hm true hacc hD
   obtain ⟨v, hl3, hv⟩ := l3_lhu s rd rs1 imm h.bareVM hacc.aligned
   exact ⟨_, hr, load_post h hl3 (by rw [extend_value_toNat_unsigned _ (by decide), hsv, hv])⟩
@@ -93,7 +89,7 @@ theorem lbu_sim {s t} {D : BitVec 64 → Prop} (h : ExecPre s t) (hm : MemRel s 
     (rd rs1 : BitVec 5) (imm : BitVec 12) (hacc : SailAccessOK t (l3EA s rs1 imm) 1 false)
     (hD : ∀ i < 1, D (l3EA s rs1 imm + BitVec.ofNat 64 i)) :
     ∃ t', runSail (execute_LOAD imm (.Regidx rs1) (.Regidx rd) true 1) t =
-      some (RETIRE_SUCCESS, t') ∧ ExecPost («dfn'LBU» (rd, rs1, imm) s) t t' := by
+      some (RETIRE_SUCCESS, t') ∧ ExecPost s («dfn'LBU» (rd, rs1, imm) s) t t' := by
   obtain ⟨sv, hsv, hr⟩ := sail_load (rd := rd) h hm true hacc hD
   obtain ⟨v, hl3, hv⟩ := l3_lbu s rd rs1 imm h.bareVM
   exact ⟨_, hr, load_post h hl3 (by rw [extend_value_toNat_unsigned _ (by decide), hsv, hv])⟩

@@ -8,13 +8,13 @@ import LeanRV64D.InstsEnd
 
 Every per-instruction lemma has the shape
 
-  `ExecPre s t → ∃ t', runSail (execute_X ...) t = some (RETIRE_SUCCESS, t') ∧ ExecPost s' t t'`
+  `ExecPre s t → ∃ t', runSail (execute_X ...) t = some (RETIRE_SUCCESS, t') ∧ ExecPost s s' t t'`
 
 where `s'` is L3's `Run` result. `ExecPre` is what holds between Sail's
 `set_next_pc (PC + 4)` and `execute` in `try_step`, matched with L3 after
 `Fetch` of a 4-byte instruction. `ExecPost` relates the results: registers,
-the next PC (Sail `nextPC` against L3 `l3NextPC`), and a frame condition on
-the Sail registers the instruction may not touch.
+the next PC (Sail `nextPC` against L3 `l3NextPC`), a frame condition on the
+Sail registers the instruction may not touch, and preservation of `MemRel`.
 -/
 
 namespace FlapjackRiscvCheck
@@ -37,22 +37,31 @@ structure ExecPre (s : L3State) (t : SailState) : Prop where
 def SailRegFrame (t t' : SailState) : Prop :=
   ∀ r, Register.isGpr r = false → r ≠ Register.nextPC → t'.regs.get? r = t.regs.get? r
 
-structure ExecPost (s' : L3State) (t t' : SailState) : Prop where
+/-- On the address domain `D`, Sail's partial memory holds exactly L3's `MEM8`. -/
+structure MemRel (s : L3State) (t : SailState) (D : BitVec 64 → Prop) : Prop where
+  agree : ∀ a, D a → t.mem.get? a.toNat = some (s.MEM8 a)
+
+/-- Memory unchanged on both sides preserves `MemRel`. -/
+theorem MemRel.of_eq {s s' t t' D} (h : MemRel s t D) (hs : s'.MEM8 = s.MEM8)
+    (ht : t'.mem = t.mem) : MemRel s' t' D :=
+  ⟨fun a ha => by rw [hs, ht]; exact h.agree a ha⟩
+
+structure ExecPost (s s' : L3State) (t t' : SailState) : Prop where
   rel : RegRel s' t'
   nextPC : t'.regs.get? Register.nextPC = l3NextPC s'
   frame : SailRegFrame t t'
-  mem : t'.mem = t.mem
+  mem : ∀ D, MemRel s t D → MemRel s' t' D
 
 theorem ExecPre.l3NextPC {s t} (h : ExecPre s t) : l3NextPC s = some (PC s + 4) := by
   simp [FlapjackRiscvCheck.l3NextPC, h.nextFetch, h.skip]
 
 /-- An instruction that only writes `v` to `rd` on both sides meets the contract. -/
 theorem ExecPost.of_write {s t} (h : ExecPre s t) (rd : BitVec 5) (v : BitVec 64) :
-    ExecPost («write'GPR» (v, rd) s) t (sailSetGpr t rd v) where
+    ExecPost s («write'GPR» (v, rd) s) t (sailSetGpr t rd v) where
   rel := h.rel.write rd v
   nextPC := by
     rw [sailSetGpr_get?_of_not_gpr _ _ _ rfl, l3NextPC_write'GPR, h.l3NextPC, h.nextPC]
   frame _ hr _ := sailSetGpr_get?_of_not_gpr _ _ _ hr
-  mem := sailSetGpr_mem _ _ _
+  mem _ hm := hm.of_eq (l3_MEM8_write'GPR s rd v) (sailSetGpr_mem _ _ _)
 
 end FlapjackRiscvCheck

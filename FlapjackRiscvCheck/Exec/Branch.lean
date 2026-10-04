@@ -42,18 +42,18 @@ theorem sailGpr_insert_nextPC (t : SailState) (v : BitVec 64) (n : BitVec 5) :
   interval_cases k <;> simp [sailGpr, Std.ExtDHashMap.get?_insert]
 
 theorem ExecPre.post_jump {s t} (h : ExecPre s t) (a : BitVec 64) :
-    ExecPost (branchTo a s) t { t with regs := t.regs.insert Register.nextPC a } where
+    ExecPost s (branchTo a s) t { t with regs := t.regs.insert Register.nextPC a } where
   rel := ⟨fun n => by rw [sailGpr_insert_nextPC, l3_GPR_branchTo]; exact h.rel.gpr n,
     by simp [Std.ExtDHashMap.get?_insert]; exact h.rel.pc⟩
   nextPC := by simp [Std.ExtDHashMap.get?_insert, l3NextPC_branchTo]
   frame r _ hr := by simp [Std.ExtDHashMap.get?_insert, Ne.symm hr]
-  mem := rfl
+  mem _ hm := hm.of_eq rfl rfl
 
-theorem ExecPre.post_id {s t} (h : ExecPre s t) : ExecPost s t t where
+theorem ExecPre.post_id {s t} (h : ExecPre s t) : ExecPost s s t t where
   rel := h.rel
   nextPC := by rw [h.nextPC, h.l3NextPC]
   frame _ _ _ := rfl
-  mem := rfl
+  mem _ hm := hm
 
 theorem lsb_add_even (pc x : BitVec 64) (hpc : pc.getLsbD 0 = false) :
     (pc + x <<< 1).getLsbD 0 = false := by
@@ -71,7 +71,7 @@ theorem btype_sim {s t} {op : bop} {rs1 rs2 : BitVec 5}
     (hl3 : l3op (rs1, rs2, offs) s =
       if cond then branchTo (PC s + (BitVec.signExtend 64 offs <<< 1)) s else s) :
     ∃ t', runSail (execute_BTYPE (offs ++ 0#1) (.Regidx rs2) (.Regidx rs1) op) t =
-      some (RETIRE_SUCCESS, t') ∧ ExecPost (l3op (rs1, rs2, offs) s) t t' := by
+      some (RETIRE_SUCCESS, t') ∧ ExecPost s (l3op (rs1, rs2, offs) s) t t' := by
   obtain ⟨m, hm, hC⟩ := h.misaC
   rw [hsail, hl3]
   cases cond
@@ -109,35 +109,35 @@ macro "btype_l3" h:term : tactic =>
 
 theorem beq_sim {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12) :
     ∃ t', runSail (execute_BTYPE (offs ++ 0#1) (.Regidx rs2) (.Regidx rs1) .BEQ) t =
-      some (RETIRE_SUCCESS, t') ∧ ExecPost («dfn'BEQ» (rs1, rs2, offs) s) t t' :=
+      some (RETIRE_SUCCESS, t') ∧ ExecPost s («dfn'BEQ» (rs1, rs2, offs) s) t t' :=
   btype_sim h offs (GPR rs1 s == GPR rs2 s) (by btype_reads h) (by btype_l3 h)
 
 theorem bne_sim {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12) :
     ∃ t', runSail (execute_BTYPE (offs ++ 0#1) (.Regidx rs2) (.Regidx rs1) .BNE) t =
-      some (RETIRE_SUCCESS, t') ∧ ExecPost («dfn'BNE» (rs1, rs2, offs) s) t t' :=
+      some (RETIRE_SUCCESS, t') ∧ ExecPost s («dfn'BNE» (rs1, rs2, offs) s) t t' :=
   btype_sim h offs (!(GPR rs1 s == GPR rs2 s)) (by btype_reads h; rfl) (by btype_l3 h)
 
 theorem blt_sim {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12) :
     ∃ t', runSail (execute_BTYPE (offs ++ 0#1) (.Regidx rs2) (.Regidx rs1) .BLT) t =
-      some (RETIRE_SUCCESS, t') ∧ ExecPost («dfn'BLT» (rs1, rs2, offs) s) t t' :=
+      some (RETIRE_SUCCESS, t') ∧ ExecPost s («dfn'BLT» (rs1, rs2, offs) s) t t' :=
   btype_sim h offs ((GPR rs1 s).slt (GPR rs2 s))
     (by btype_reads h; rw [sail_slt]) (by btype_l3 h)
 
 theorem bge_sim {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12) :
     ∃ t', runSail (execute_BTYPE (offs ++ 0#1) (.Regidx rs2) (.Regidx rs1) .BGE) t =
-      some (RETIRE_SUCCESS, t') ∧ ExecPost («dfn'BGE» (rs1, rs2, offs) s) t t' :=
+      some (RETIRE_SUCCESS, t') ∧ ExecPost s («dfn'BGE» (rs1, rs2, offs) s) t t' :=
   btype_sim h offs ((GPR rs2 s).sle (GPR rs1 s))
     (by btype_reads h; rw [sail_sge]) (by btype_l3 h)
 
 theorem bltu_sim {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12) :
     ∃ t', runSail (execute_BTYPE (offs ++ 0#1) (.Regidx rs2) (.Regidx rs1) .BLTU) t =
-      some (RETIRE_SUCCESS, t') ∧ ExecPost («dfn'BLTU» (rs1, rs2, offs) s) t t' :=
+      some (RETIRE_SUCCESS, t') ∧ ExecPost s («dfn'BLTU» (rs1, rs2, offs) s) t t' :=
   btype_sim h offs ((GPR rs1 s).ult (GPR rs2 s))
     (by btype_reads h; rw [sail_ult]) (by btype_l3 h)
 
 theorem bgeu_sim {s t} (h : ExecPre s t) (rs1 rs2 : BitVec 5) (offs : BitVec 12) :
     ∃ t', runSail (execute_BTYPE (offs ++ 0#1) (.Regidx rs2) (.Regidx rs1) .BGEU) t =
-      some (RETIRE_SUCCESS, t') ∧ ExecPost («dfn'BGEU» (rs1, rs2, offs) s) t t' :=
+      some (RETIRE_SUCCESS, t') ∧ ExecPost s («dfn'BGEU» (rs1, rs2, offs) s) t t' :=
   btype_sim h offs (!(GPR rs1 s).ult (GPR rs2 s))
     (by btype_reads h; rw [sail_uge]) (by btype_l3 h)
 

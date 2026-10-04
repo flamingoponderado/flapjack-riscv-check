@@ -28,3 +28,6 @@ import FlapjackRiscvCheck.Sail.Mem.Read
 import FlapjackRiscvCheck.Sail.Mem.Bytes
 import FlapjackRiscvCheck.L3.Load
 import FlapjackRiscvCheck.Exec.Load
+import FlapjackRiscvCheck.Sail.Mem.Write
+import FlapjackRiscvCheck.L3.Store
+import FlapjackRiscvCheck.Exec.Store
