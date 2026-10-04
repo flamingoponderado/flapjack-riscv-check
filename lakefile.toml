@@ -1,0 +1,19 @@
+name = "flapjack-riscv-check"
+version = "0.1.0"
+defaultTargets = ["FlapjackRiscvCheck"]
+moreLeanArgs = ["--tstack=400000"]
+
+# Flapjack's vibe-ported (L3-derived) RISC-V semantics, `Flapjack.RiscV.L3`.
+[[require]]
+name = "Flapjack"
+git = "https://github.com/flamingoponderado/flapjack"
+rev = "main"
+
+# Lean extraction of the Sail RISC-V model, `LeanRV64D`.
+[[require]]
+name = "Lean_RV64D"
+git = "https://github.com/flamingoponderado/sail-riscv-lean"
+rev = "main"
+
+[[lean_lib]]
+name = "FlapjackRiscvCheck"
