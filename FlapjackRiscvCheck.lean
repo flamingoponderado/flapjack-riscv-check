@@ -49,3 +49,4 @@ import FlapjackRiscvCheck.Decode.Dispatch
 import FlapjackRiscvCheck.Step.Frame
 import FlapjackRiscvCheck.Step.Sim
 import FlapjackRiscvCheck.Step.Run
+import FlapjackRiscvCheck.Witness
